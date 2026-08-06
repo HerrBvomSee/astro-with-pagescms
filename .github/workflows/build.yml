@@ -1,4 +1,4 @@
-name: Build Astro App
+name: Build and Deploy Astro App
 
 on:
   push:
@@ -6,15 +6,21 @@ on:
       - main
     paths-ignore:
       - ".pages.yml"
-  # pull_request:
-  #   branches:
-  #     - main
-  #   paths:
-  #     - "!.pages.yml"
 
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: "Test scenario tags"
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      BUNNY_STORAGE_ZONE: ${{ secrets.BUNNY_STORAGE_ZONE }}
+      BUNNY_STORAGE_PASSWORD: ${{ secrets.BUNNY_STORAGE_PASSWORD }}
+      BUNNY_PULL_ZONE_ID: ${{ secrets.BUNNY_PULL_ZONE_ID }}
+      BUNNY_API_KEY: ${{ secrets.BUNNY_API_KEY }}
 
     steps:
       - name: Check out repository
@@ -22,3 +28,75 @@ jobs:
 
       - name: Build application
         uses: ./.github/actions/build-astro
+
+      - name: Validate Bunny.net credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for var in BUNNY_STORAGE_ZONE BUNNY_STORAGE_PASSWORD BUNNY_PULL_ZONE_ID BUNNY_API_KEY; do
+            if [ -z "${!var:-}" ]; then
+              echo "Missing required secret: $var"
+              exit 1
+            fi
+          done
+
+      - name: Upload dist to Bunny.net Storage
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          DIST_DIR="dist"
+
+          if [ ! -d "$DIST_DIR" ]; then
+            echo "Build output directory not found: $DIST_DIR"
+            exit 1
+          fi
+
+          total=$(find "$DIST_DIR" -type f | wc -l | tr -d ' ')
+          echo "Uploading $total file(s) to Bunny.net Storage..."
+
+          count=0
+          failed=0
+
+          while IFS= read -r file; do
+            count=$((count + 1))
+            remote_path="${file#$DIST_DIR/}"
+            encoded_path=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1]))' "$remote_path")
+
+            printf "[%d/%d] %s\n" "$count" "$total" "$remote_path"
+
+            http_code=$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" \
+              --request PUT \
+              "https://storage.bunnycdn.com/$BUNNY_STORAGE_ZONE/$encoded_path" \
+              --header "AccessKey: $BUNNY_STORAGE_PASSWORD" \
+              --data-binary "@$file" || true)
+
+            if [ "$http_code" != "200" ] && [ "$http_code" != "201" ]; then
+              echo "Upload failed for $remote_path with HTTP $http_code"
+              failed=$((failed + 1))
+            fi
+          done < <(find "$DIST_DIR" -type f | sort)
+
+          echo "Upload complete: $((count - failed))/$count file(s) succeeded."
+
+          if [ "$failed" -gt 0 ]; then
+            exit 1
+          fi
+
+      - name: Purge Bunny.net pull zone cache
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          http_code=$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" \
+            --request POST \
+            "https://api.bunny.net/pullzone/$BUNNY_PULL_ZONE_ID/purgeCache" \
+            --header "AccessKey: $BUNNY_API_KEY")
+
+          if [ "$http_code" = "200" ] || [ "$http_code" = "204" ]; then
+            echo "Cache purged successfully."
+          else
+            echo "Cache purge returned HTTP $http_code"
+            exit 1
+          fi
