@@ -10,3 +10,7 @@ heroImage: assets/darstellung-eines-meetings-ai-gen.jpg
 
 Dies ist ein Absatz mit Text
 
+## Überschrift 2
+
+So, noch mehr Text...
+

@@ -4,10 +4,13 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "!.pages.yml"
-
-  pull_request:
+    paths-ignore:
+      - ".pages.yml"
+  # pull_request:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - "!.pages.yml"
 
 jobs:
   build:
