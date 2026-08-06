@@ -1,0 +1,29 @@
+name: Build Astro
+description: Install dependencies and build the Astro application
+
+inputs:
+  node-version:
+    description: Node.js version to use
+    required: false
+    default: "20"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: pnpm
+
+    - name: Enable Corepack
+      shell: bash
+      run: corepack enable
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
+
+    - name: Build Astro app
+      shell: bash
+      run: pnpm build
