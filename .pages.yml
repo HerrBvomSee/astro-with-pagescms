@@ -1,6 +1,17 @@
 media:
   input: blog/assets
   output: assets
+components:
+  seo:
+    type: object
+    label: SEO
+    fields:
+      - name: title
+        label: Titel
+        type: string
+      - name: description
+        label: Beschreibung
+        type: text
 content:
   - name: Posts
     type: collection
@@ -12,6 +23,9 @@ content:
       - name: description
         label: Description
         type: text
+      - name: seo
+        label: SEO information
+        component: seo
       - name: pubDate
         label: Published Date
         type: date

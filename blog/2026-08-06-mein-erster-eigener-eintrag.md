@@ -14,3 +14,5 @@ Dies ist ein Absatz mit Text
 
 So, noch mehr Text...
 
+![](assets/blog-placeholder-about.jpg)
+
