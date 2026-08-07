@@ -1,6 +1,7 @@
 media:
   input: blog/assets
   output: assets
+  
 components:
   seo:
     type: object
@@ -12,6 +13,7 @@ components:
       - name: description
         label: Beschreibung
         type: text
+        
 content:
   - name: Posts
     type: collection
