@@ -75,7 +75,7 @@ jobs:
               --request PUT \
               "https://storage.bunnycdn.com/$BUNNY_STORAGE_ZONE" \
               --header "AccessKey: $BUNNY_STORAGE_PASSWORD" \
-              --upload-file file)
+              --upload-file $file)
 
             if [ "$http_code" != "200" ] && [ "$http_code" != "201" ]; then
               echo "Upload failed for $remote_path with HTTP $http_code"
