@@ -3,7 +3,10 @@ media:
     label: Blog Bilder
     input: blog/assets
     output: assets
-  
+  - name: logos
+    label: Logos
+    input: public/logos
+    output: public/logos
   
 components:
   seo:
