@@ -1,9 +1,11 @@
 ---
+import pageData from "../_data/pageinfo.json"
+
 const today = new Date();
 ---
 
 <footer>
-  &copy; {today.getFullYear()} Frontend Hire. All rights reserved.
+  &copy; {today.getFullYear()} {pageData.title}. All rights reserved.
 </footer>
 <style>
   footer {
