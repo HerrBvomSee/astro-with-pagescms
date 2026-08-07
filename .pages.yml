@@ -41,4 +41,9 @@ content:
       fields: [title, description, pubDate, heroImage]
       
   - name: PageInfo
-    type: page
+    type: file
+    path: src/_data/pageinfo.json
+    fields:
+      - name: title
+        label: Seitenname
+        type: string
