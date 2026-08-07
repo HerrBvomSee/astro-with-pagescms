@@ -1,5 +1,6 @@
 media:
   - name: blog
+    label: Blog Bilder
     input: blog/assets
     output: assets
   
