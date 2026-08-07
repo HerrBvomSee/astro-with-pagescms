@@ -58,8 +58,13 @@ jobs:
             exit 1
           fi
 
-          total=$(find "$DIST_DIR" -type f | wc -l | tr -d ' ')
-          echo "Uploading $total file(s) to Bunny.net Storage..."
+          # Collect file list into a temp file to avoid pipe subshell issues
+          FILE_LIST=$(mktemp)
+          trap 'rm -f "$FILE_LIST"' EXIT
+          find "$DIST_DIR" -type f > "$FILE_LIST"
+
+          total=$(wc -l < "$FILE_LIST")
+          echo "Uploading $total files to Bunny Storage..."
 
           count=0
           failed=0
@@ -67,21 +72,21 @@ jobs:
           while IFS= read -r file; do
             count=$((count + 1))
             remote_path="${file#$DIST_DIR/}"
-            encoded_path=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[2]))' "$remote_path")
+            encoded_path=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1]))' "$remote_path")
 
             printf "[%d/%d] %s\n" "$count" "$total" "$remote_path"
 
             http_code=$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" \
               --request PUT \
-              "https://storage.bunnycdn.com/$BUNNY_STORAGE_ZONE" \
+              "https://storage.bunnycdn.com/$BUNNY_STORAGE_ZONE/$encoded_path" \
               --header "AccessKey: $BUNNY_STORAGE_PASSWORD" \
-              --upload-file $file)
+              --data-binary "@$file" || true)
 
             if [ "$http_code" != "200" ] && [ "$http_code" != "201" ]; then
               echo "Upload failed for $remote_path with HTTP $http_code"
               failed=$((failed + 1))
             fi
-          done < <(find "$DIST_DIR" -type f | sort)
+          done < "$FILE_LIST"
 
           echo "Upload complete: $((count - failed))/$count file(s) succeeded."
 
