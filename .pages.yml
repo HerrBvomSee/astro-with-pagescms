@@ -1,6 +1,8 @@
 media:
-  input: blog/assets
-  output: assets
+  - name: blog
+    input: blog/assets
+    output: assets
+  
   
 components:
   seo:
