@@ -67,15 +67,15 @@ jobs:
           while IFS= read -r file; do
             count=$((count + 1))
             remote_path="${file#$DIST_DIR/}"
-            encoded_path=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1]))' "$remote_path")
+            encoded_path=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[2]))' "$remote_path")
 
             printf "[%d/%d] %s\n" "$count" "$total" "$remote_path"
 
             http_code=$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" \
               --request PUT \
-              "https://storage.bunnycdn.com/$BUNNY_STORAGE_ZONE/$encoded_path" \
+              "https://storage.bunnycdn.com/$BUNNY_STORAGE_ZONE" \
               --header "AccessKey: $BUNNY_STORAGE_PASSWORD" \
-              --data-binary "@$file" || true)
+              --upload-file file)
 
             if [ "$http_code" != "200" ] && [ "$http_code" != "201" ]; then
               echo "Upload failed for $remote_path with HTTP $http_code"
