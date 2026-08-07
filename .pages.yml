@@ -48,3 +48,6 @@ content:
       - name: title
         label: Seitenname
         type: string
+settings:
+  commit: 
+    identiy: user
